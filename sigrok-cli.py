@@ -18,6 +18,7 @@
 ##
 
 from sigrok.core.classes import *
+from signal import signal, SIGINT
 import argparse
 import sys
 
@@ -70,5 +71,11 @@ def datafeed_in(device, packet):
 
 session.add_callback(datafeed_in)
 session.start()
+
+if args.continuous:
+    signal(SIGINT, lambda signum, frame: session.stop())
+
 session.run()
-session.stop()
+
+if not args.continuous:
+    session.stop()
