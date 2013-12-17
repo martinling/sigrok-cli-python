@@ -25,11 +25,15 @@ parser = argparse.ArgumentParser()
 parser.add_argument('-d', '--driver', help="The driver to use")
 parser.add_argument('-O', '--output-format', help="Output format", default="bits")
 parser.add_argument('--scan', help="Scan for devices", action='store_true')
+parser.add_argument('--time', help="How long to sample (ms)", type=int)
 parser.add_argument('--samples', help="Number of samples to acquire", type=int)
+parser.add_argument('--frames', help="Number of frames to acquire", type=int)
+parser.add_argument('--continuous', help="Sample continuously", action='store_true')
 
 args = parser.parse_args()
 
-if not (args.scan or (args.driver and args.samples)):
+if not (args.scan or (
+        args.driver and (args.time or args.samples or args.frames or args.continuous))):
     parser.print_help()
     sys.exit(1)
 
@@ -47,8 +51,12 @@ if args.scan:
 driver = context.drivers[args.driver]
 device = driver.scan()[0]
 
+if args.time:
+    device.limit_msec = args.time
 if args.samples:
     device.limit_samples = args.samples
+if args.frames:
+    device.limit_frames = args.frames
 
 session = Session(context)
 session.add_device(device)
