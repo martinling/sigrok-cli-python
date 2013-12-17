@@ -1,0 +1,25 @@
+sigrok-cli-python
+-----------------
+
+This is an unofficial re-implemntation of the sigrok-cli tool, written using
+the sigrok Python API.
+
+This project is intended to:
+
+ - provide an easy means of testing the sigrok Python bindings without writing
+   many custom scripts.
+
+ - test and demonstrate the ease of use of the sigrok Python API.
+
+ - allow new features for sigrok-cli to be prototyped quickly.
+
+ - allow bugs in sigrok-cli (as opposed to underlying libraries) to be verified
+   by comparing to an alternative implementation.
+
+It is not intended to:
+
+ - reproduce the exact behaviour of sigrok-cli (e.g. human readable text output
+   or error messages).
+
+ - replace sigrok-cli as the "official" command line client of the sigrok
+   project.
