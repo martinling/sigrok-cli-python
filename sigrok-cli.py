@@ -28,6 +28,7 @@ parser.add_argument('-c', '--config', help="Specify device configuration options
 parser.add_argument('-i', '--input-file', help="Load input from file")
 parser.add_argument('-I', '--input-format', help="Input format")
 parser.add_argument('-O', '--output-format', help="Output format", default="bits")
+parser.add_argument('-p', '--probes', help="Probes to use")
 parser.add_argument('--scan', help="Scan for devices", action='store_true')
 parser.add_argument('--time', help="How long to sample (ms)", type=int)
 parser.add_argument('--samples', help="Number of samples to acquire", type=int)
@@ -97,8 +98,13 @@ elif args.driver:
     if args.frames:
         device.limit_frames = args.frames
 
-    if args.set:
-        sys.exit(0)
+if args.probes:
+    enabled_probes = set(args.probes.split(','))
+    for probe in device.probes.values():
+        probe.enabled = (probe.name in enabled_probes)
+
+if args.set:
+    sys.exit(0)
 
 session = Session(context)
 
