@@ -48,13 +48,16 @@ if not (args.scan
 
 context = Context()
 
-if args.scan:
+def print_device_info(device):
+    print "%s - %s with %d probes: %s" % (device.driver.name, str.join(' ',
+            [s for s in (device.vendor, device.model, device.version) if s]),
+        len(device.probes), str.join(' ', sorted(device.probes.keys())))
+
+if args.scan and not args.driver:
     for driver in context.drivers.values():
         devices = driver.scan()
         for device in devices:
-            print "%s - %s with %d probes: %s" % (device.driver.name, str.join(' ',
-                    [s for s in (device.vendor, device.model, device.version) if s]),
-                len(device.probes), str.join(' ', sorted(device.probes.keys())))
+            print_device_info(device)
     sys.exit(0)
 
 if args.input_file:
@@ -86,7 +89,14 @@ elif args.driver:
             key, value = pair.split('=')
             driver_options[key] = value
 
-    device = driver.scan(**driver_options)[0]
+    devices = driver.scan(**driver_options)
+
+    if args.scan:
+        for device in devices:
+            print_device_info(device)
+        sys.exit(0)
+
+    device = devices[0]
 
     for key, value in driver_options.items():
         setattr(device, key, value)
