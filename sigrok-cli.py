@@ -24,6 +24,7 @@ import sys
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-d', '--driver', help="The driver to use")
+parser.add_argument('-c', '--config', help="Specify device configuration options")
 parser.add_argument('-O', '--output-format', help="Output format", default="bits")
 parser.add_argument('--scan', help="Scan for devices", action='store_true')
 parser.add_argument('--time', help="How long to sample (ms)", type=int)
@@ -50,7 +51,19 @@ if args.scan:
     sys.exit(0)
 
 driver = context.drivers[args.driver]
-device = driver.scan()[0]
+
+driver_options = {}
+
+if args.config:
+    pairs = args.config.split(':')
+    for pair in pairs:
+        key, value = pair.split('=')
+        driver_options[key] = value
+
+device = driver.scan(**driver_options)[0]
+
+for key, value in driver_options.items():
+    setattr(device, key, value)
 
 if args.time:
     device.limit_msec = args.time
