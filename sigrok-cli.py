@@ -25,6 +25,8 @@ import sys
 parser = argparse.ArgumentParser()
 parser.add_argument('-d', '--driver', help="The driver to use")
 parser.add_argument('-c', '--config', help="Specify device configuration options")
+parser.add_argument('-i', '--input-file', help="Load input from file")
+parser.add_argument('-I', '--input-format', help="Input format")
 parser.add_argument('-O', '--output-format', help="Output format", default="bits")
 parser.add_argument('--scan', help="Scan for devices", action='store_true')
 parser.add_argument('--time', help="How long to sample (ms)", type=int)
@@ -35,10 +37,11 @@ parser.add_argument('--set', help="Set device options only", action='store_true'
 
 args = parser.parse_args()
 
-if not (args.scan or (
-        args.driver and 
+if not (args.scan
+    or (args.driver and (
             args.set or
-            (args.time or args.samples or args.frames or args.continuous))):
+            (args.time or args.samples or args.frames or args.continuous)))
+    or args.input_file):
     parser.print_help()
     sys.exit(1)
 
@@ -53,33 +56,55 @@ if args.scan:
                 len(device.probes), str.join(' ', sorted(device.probes.keys())))
     sys.exit(0)
 
-driver = context.drivers[args.driver]
+if args.input_file:
 
-driver_options = {}
+    if args.input_format:
+        format = context.input_formats[args.input_format]
+    else:
+        matched = False
+        for format in context.input_formats.values():
+            if format.format_match(args.input_file):
+                matched = True
+                break
+        if not matched:
+            raise Exception, "File not in any recognised input format."
 
-if args.config:
-    pairs = args.config.split(':')
-    for pair in pairs:
-        key, value = pair.split('=')
-        driver_options[key] = value
+    input_file = InputFile(format, args.input_file)
 
-device = driver.scan(**driver_options)[0]
+    device = input_file.device
 
-for key, value in driver_options.items():
-    setattr(device, key, value)
+elif args.driver:
 
-if args.time:
-    device.limit_msec = args.time
-if args.samples:
-    device.limit_samples = args.samples
-if args.frames:
-    device.limit_frames = args.frames
+    driver = context.drivers[args.driver]
 
-if args.set:
-    sys.exit(0)
+    driver_options = {}
+
+    if args.config:
+        pairs = args.config.split(':')
+        for pair in pairs:
+            key, value = pair.split('=')
+            driver_options[key] = value
+
+    device = driver.scan(**driver_options)[0]
+
+    for key, value in driver_options.items():
+        setattr(device, key, value)
+
+    if args.time:
+        device.limit_msec = args.time
+    if args.samples:
+        device.limit_samples = args.samples
+    if args.frames:
+        device.limit_frames = args.frames
+
+    if args.set:
+        sys.exit(0)
 
 session = Session(context)
-session.add_device(device)
+
+if args.driver:
+    session.add_device(device)
+    session.start()
 
 output = Output(context.output_formats[args.output_format], device)
 
@@ -89,12 +114,13 @@ def datafeed_in(device, packet):
         print text,
 
 session.add_callback(datafeed_in)
-session.start()
 
-if args.continuous:
-    signal(SIGINT, lambda signum, frame: session.stop())
-
-session.run()
-
-if not args.continuous:
+if args.input_file:
+    input_file.load()
     session.stop()
+else:
+    if args.continuous:
+        signal(SIGINT, lambda signum, frame: session.stop())
+    session.run()
+    if not args.continuous:
+        session.stop()
