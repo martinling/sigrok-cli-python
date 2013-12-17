@@ -26,6 +26,7 @@ VERSION = "0.1"
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-V', '--version', help="Show version", action='store_true')
+parser.add_argument('-l', '--loglevel', help="Set log level", type=int)
 parser.add_argument('-d', '--driver', help="The driver to use")
 parser.add_argument('-c', '--config', help="Specify device configuration options")
 parser.add_argument('-i', '--input-file', help="Load input from file")
@@ -67,6 +68,9 @@ if args.version:
         print "  %-20s %s" % (output.id, output.description)
     print
     sys.exit(0)
+
+if args.loglevel:
+    Log().level = LogLevel(args.loglevel)
 
 def print_device_info(device):
     print "%s - %s with %d probes: %s" % (device.driver.name, str.join(' ',
