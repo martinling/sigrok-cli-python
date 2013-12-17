@@ -22,7 +22,10 @@ from signal import signal, SIGINT
 import argparse
 import sys
 
+VERSION = "0.1"
+
 parser = argparse.ArgumentParser()
+parser.add_argument('-V', '--version', help="Show version", action='store_true')
 parser.add_argument('-d', '--driver', help="The driver to use")
 parser.add_argument('-c', '--config', help="Specify device configuration options")
 parser.add_argument('-i', '--input-file', help="Load input from file")
@@ -38,7 +41,8 @@ parser.add_argument('--set', help="Set device options only", action='store_true'
 
 args = parser.parse_args()
 
-if not (args.scan
+if not (args.version
+    or args.scan
     or (args.driver and (
             args.set or
             (args.time or args.samples or args.frames or args.continuous)))
@@ -47,6 +51,22 @@ if not (args.scan
     sys.exit(1)
 
 context = Context()
+
+if args.version:
+    print sys.argv[0], VERSION
+    print "\nUsing libsigrok %s (lib version %s)." % (
+        context.package_version, context.lib_version)
+    print "\nSupported hardware drivers:\n"
+    for driver in context.drivers.values():
+        print "  %-20s %s" % (driver.name, driver.longname)
+    print "\nSupported input formats:\n"
+    for input in context.input_formats.values():
+        print "  %-20s %s" % (input.id, input.description)
+    print "\nSupported output formats:\n"
+    for output in context.output_formats.values():
+        print "  %-20s %s" % (output.id, output.description)
+    print
+    sys.exit(0)
 
 def print_device_info(device):
     print "%s - %s with %d probes: %s" % (device.driver.name, str.join(' ',
