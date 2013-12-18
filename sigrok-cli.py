@@ -19,6 +19,7 @@
 
 from sigrok.core.classes import *
 from signal import signal, SIGINT
+from fractions import Fraction
 import argparse
 import sys
 
@@ -111,8 +112,20 @@ elif args.driver:
     if args.config:
         pairs = args.config.split(':')
         for pair in pairs:
-            key, value = pair.split('=')
-            driver_options[key] = value
+            name, value = pair.split('=')
+            key = getattr(ConfigKey, name)
+            datatype = key.info.datatype
+            if datatype is DataType.UINT64:
+                value = int(value)
+            elif datatype is DataType.FLOAT:
+                value = float(value)
+            elif datatype is DataType.BOOL:
+                value = bool(value)
+            elif datatype is DataType.RATIONAL_VOLT:
+                value = Fraction(int(value), 1)
+            elif datatype is DataType.RATIONAL_PERIOD:
+                value = Fraction(int(value), 1)
+            driver_options[name] = value
 
     devices = driver.scan(**driver_options)
 
