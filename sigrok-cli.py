@@ -122,6 +122,8 @@ elif args.driver:
 
     device = devices[0]
 
+    device.open()
+
     for key, value in driver_options.items():
         setattr(device, key, value)
 
@@ -138,6 +140,7 @@ if args.probes:
         probe.enabled = (probe.name in enabled_probes)
 
 if args.set:
+    device.close()
     sys.exit(0)
 
 session = Session(context)
@@ -164,3 +167,4 @@ else:
     session.run()
     if not args.continuous:
         session.stop()
+    device.close()
