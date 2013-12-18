@@ -84,7 +84,7 @@ if args.loglevel:
 def print_device_info(device):
     print "%s - %s with %d probes: %s" % (device.driver.name, str.join(' ',
             [s for s in (device.vendor, device.model, device.version) if s]),
-        len(device.probes), str.join(' ', sorted(device.probes.keys())))
+        len(device.probes), str.join(' ', device.probes.keys()))
 
 if args.scan and not args.driver:
     for driver in context.drivers.values():
