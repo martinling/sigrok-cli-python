@@ -33,6 +33,7 @@ parser.add_argument('-i', '--input-file', help="Load input from file")
 parser.add_argument('-I', '--input-format', help="Input format")
 parser.add_argument('-O', '--output-format', help="Output format", default="bits")
 parser.add_argument('-p', '--probes', help="Probes to use")
+parser.add_argument('-g', '--probe-group', help="Probe group to use")
 parser.add_argument('--scan', help="Scan for devices", action='store_true')
 parser.add_argument('--time', help="How long to sample (ms)", type=int)
 parser.add_argument('--samples', help="Number of samples to acquire", type=int)
@@ -124,8 +125,13 @@ elif args.driver:
 
     device.open()
 
+    if args.probe_group:
+        obj = device.probe_groups[args.probe_group]
+    else:
+        obj = device
+
     for key, value in driver_options.items():
-        setattr(device, key, value)
+        setattr(obj, key, value)
 
     if args.time:
         device.limit_msec = args.time
