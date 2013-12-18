@@ -25,13 +25,6 @@ import sys
 
 VERSION = "0.1"
 
-SI_PREFIXES = dict(
-    M = Fraction(1e6),
-    k = Fraction(1e3),
-    m = 1 / Fraction(1e3),
-    u = 1 / Fraction(1e6),
-    n = 1 / Fraction(1e9))
-
 parser = argparse.ArgumentParser()
 parser.add_argument('-V', '--version', help="Show version", action='store_true')
 parser.add_argument('-l', '--loglevel', help="Set log level", type=int)
@@ -43,9 +36,9 @@ parser.add_argument('-O', '--output-format', help="Output format", default="bits
 parser.add_argument('-p', '--probes', help="Probes to use")
 parser.add_argument('-g', '--probe-group', help="Probe group to use")
 parser.add_argument('--scan', help="Scan for devices", action='store_true')
-parser.add_argument('--time', help="How long to sample (ms)", type=int)
-parser.add_argument('--samples', help="Number of samples to acquire", type=int)
-parser.add_argument('--frames', help="Number of frames to acquire", type=int)
+parser.add_argument('--time', help="How long to sample (ms)")
+parser.add_argument('--samples', help="Number of samples to acquire")
+parser.add_argument('--frames', help="Number of frames to acquire")
 parser.add_argument('--continuous', help="Sample continuously", action='store_true')
 parser.add_argument('--set', help="Set device options only", action='store_true')
 
@@ -121,22 +114,7 @@ elif args.driver:
         for pair in pairs:
             name, value = pair.split('=')
             key = getattr(ConfigKey, name)
-            datatype = key.info.datatype
-            if datatype is DataType.UINT64:
-                value = int(value)
-            elif datatype is DataType.FLOAT:
-                value = float(value)
-            elif datatype is DataType.BOOL:
-                value = bool(value)
-            elif datatype in (DataType.RATIONAL_VOLT, DataType.RATIONAL_PERIOD):
-                value = value.rstrip('Vs')
-                if value[-1] in SI_PREFIXES:
-                    multiplier = SI_PREFIXES[value[-1]]
-                    value = value[:-1]
-                else:
-                    multiplier = 1
-                value = Fraction(value) * multiplier
-            driver_options[name] = value
+            driver_options[name] = key.parse_string(value)
 
     devices = driver.scan(**driver_options)
 
@@ -158,11 +136,11 @@ elif args.driver:
         setattr(obj, key, value)
 
     if args.time:
-        device.limit_msec = args.time
+        device.limit_msec = ConfigKey.limit_msec.parse_string(args.time)
     if args.samples:
-        device.limit_samples = args.samples
+        device.limit_samples = ConfigKey.limit_samples.parse_string(args.samples)
     if args.frames:
-        device.limit_frames = args.frames
+        device.limit_frames = ConfigKey.limit_frames.parse_string(args.frames)
 
 if args.probes:
     enabled_probes = set(args.probes.split(','))
