@@ -25,6 +25,13 @@ import sys
 
 VERSION = "0.1"
 
+SI_PREFIXES = dict(
+    M = Fraction(1e6),
+    k = Fraction(1e3),
+    m = 1 / Fraction(1e3),
+    u = 1 / Fraction(1e6),
+    n = 1 / Fraction(1e9))
+
 parser = argparse.ArgumentParser()
 parser.add_argument('-V', '--version', help="Show version", action='store_true')
 parser.add_argument('-l', '--loglevel', help="Set log level", type=int)
@@ -121,10 +128,14 @@ elif args.driver:
                 value = float(value)
             elif datatype is DataType.BOOL:
                 value = bool(value)
-            elif datatype is DataType.RATIONAL_VOLT:
-                value = Fraction(int(value), 1)
-            elif datatype is DataType.RATIONAL_PERIOD:
-                value = Fraction(int(value), 1)
+            elif datatype in (DataType.RATIONAL_VOLT, DataType.RATIONAL_PERIOD):
+                value = value.rstrip('Vs')
+                if value[-1] in SI_PREFIXES:
+                    multiplier = SI_PREFIXES[value[-1]]
+                    value = value[:-1]
+                else:
+                    multiplier = 1
+                value = Fraction(value) * multiplier
             driver_options[name] = value
 
     devices = driver.scan(**driver_options)
