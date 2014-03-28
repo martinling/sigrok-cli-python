@@ -33,8 +33,8 @@ parser.add_argument('-c', '--config', help="Specify device configuration options
 parser.add_argument('-i', '--input-file', help="Load input from file")
 parser.add_argument('-I', '--input-format', help="Input format")
 parser.add_argument('-O', '--output-format', help="Output format", default="bits")
-parser.add_argument('-p', '--probes', help="Probes to use")
-parser.add_argument('-g', '--probe-group', help="Probe group to use")
+parser.add_argument('-p', '--channels', help="Channels to use")
+parser.add_argument('-g', '--channel-group', help="Channel group to use")
 parser.add_argument('--scan', help="Scan for devices", action='store_true')
 parser.add_argument('--time', help="How long to sample (ms)")
 parser.add_argument('--samples', help="Number of samples to acquire")
@@ -75,9 +75,9 @@ if args.loglevel:
     Log().level = LogLevel(args.loglevel)
 
 def print_device_info(device):
-    print "%s - %s with %d probes: %s" % (device.driver.name, str.join(' ',
+    print "%s - %s with %d channels: %s" % (device.driver.name, str.join(' ',
             [s for s in (device.vendor, device.model, device.version) if s]),
-        len(device.probes), str.join(' ', device.probes.keys()))
+        len(device.channels), str.join(' ', device.channels.keys()))
 
 if args.scan and not args.driver:
     for driver in context.drivers.values():
@@ -127,8 +127,8 @@ elif args.driver:
 
     device.open()
 
-    if args.probe_group:
-        obj = device.probe_groups[args.probe_group]
+    if args.channel_group:
+        obj = device.channel_groups[args.channel_group]
     else:
         obj = device
 
@@ -142,10 +142,10 @@ elif args.driver:
     if args.frames:
         device.limit_frames = ConfigKey.limit_frames.parse_string(args.frames)
 
-if args.probes:
-    enabled_probes = set(args.probes.split(','))
-    for probe in device.probes.values():
-        probe.enabled = (probe.name in enabled_probes)
+if args.channels:
+    enabled_channels = set(args.channels.split(','))
+    for channel in device.channels.values():
+        channel.enabled = (channel.name in enabled_channels)
 
 if args.set:
     device.close()
