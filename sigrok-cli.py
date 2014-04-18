@@ -72,12 +72,12 @@ if args.version:
     sys.exit(0)
 
 if args.loglevel:
-    Log().level = LogLevel(args.loglevel)
+    context.loglevel = LogLevel.get(int(args.loglevel))
 
 def print_device_info(device):
     print "%s - %s with %d channels: %s" % (device.driver.name, str.join(' ',
             [s for s in (device.vendor, device.model, device.version) if s]),
-        len(device.channels), str.join(' ', device.channels.keys()))
+        len(device.channels), str.join(' ', [c.name for c in device.channels]))
 
 if args.scan and not args.driver:
     for driver in context.drivers.values():
@@ -136,11 +136,11 @@ elif args.driver:
         setattr(obj, key, value)
 
     if args.time:
-        device.limit_msec = ConfigKey.limit_msec.parse_string(args.time)
+        device.config_set(ConfigKey.LIMIT_MSEC, args.time)
     if args.samples:
-        device.limit_samples = ConfigKey.limit_samples.parse_string(args.samples)
+        device.config_set(ConfigKey.LIMIT_SAMPLES, args.samples)
     if args.frames:
-        device.limit_frames = ConfigKey.limit_frames.parse_string(args.frames)
+        device.config_set(ConfigKey.LIMIT_FRAMES, args.frames)
 
 if args.channels:
     enabled_channels = set(args.channels.split(','))
