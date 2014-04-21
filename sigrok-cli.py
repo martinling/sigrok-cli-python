@@ -53,7 +53,7 @@ if not (args.version
     parser.print_help()
     sys.exit(1)
 
-context = Context()
+context = Context.create()
 
 if args.version:
     print sys.argv[0], VERSION
@@ -64,10 +64,10 @@ if args.version:
         print "  %-20s %s" % (driver.name, driver.longname)
     print "\nSupported input formats:\n"
     for input in context.input_formats.values():
-        print "  %-20s %s" % (input.id, input.description)
+        print "  %-20s %s" % (input.name, input.description)
     print "\nSupported output formats:\n"
     for output in context.output_formats.values():
-        print "  %-20s %s" % (output.id, output.description)
+        print "  %-20s %s" % (output.name, output.description)
     print
     sys.exit(0)
 
@@ -77,7 +77,7 @@ if args.loglevel:
 def print_device_info(device):
     print "%s - %s with %d channels: %s" % (device.driver.name, str.join(' ',
             [s for s in (device.vendor, device.model, device.version) if s]),
-        len(device.channels), str.join(' ', [c.name for c in device.channels]))
+        len(device.channels), str.join(' ', [c.name for c in device.get_channels()]))
 
 if args.scan and not args.driver:
     for driver in context.drivers.values():
@@ -99,22 +99,19 @@ if args.input_file:
         if not matched:
             raise Exception, "File not in any recognised input format."
 
-    input_file = InputFile(format, args.input_file)
-
-    device = input_file.device
+    device = format.open_file(args.input_file)
 
 elif args.driver:
 
-    driver = context.drivers[args.driver]
+    driver_spec = args.driver.split(':')
+
+    driver = context.drivers[driver_spec[0]]
 
     driver_options = {}
-
-    if args.config:
-        pairs = args.config.split(':')
-        for pair in pairs:
-            name, value = pair.split('=')
-            key = getattr(ConfigKey, name)
-            driver_options[name] = key.parse_string(value)
+    for pair in driver_spec[1:]:
+        name, value = pair.split('=')
+        key = ConfigKey.get(name)
+        driver_options[name] = key.parse_string(value)
 
     devices = driver.scan(**driver_options)
 
@@ -127,37 +124,36 @@ elif args.driver:
 
     device.open()
 
-    if args.channel_group:
-        obj = device.channel_groups[args.channel_group]
-    else:
-        obj = device
+    for key, name in [
+            (ConfigKey.LIMIT_MSEC, 'time'),
+            (ConfigKey.LIMIT_SAMPLES, 'samples'),
+            (ConfigKey.LIMIT_FRAMES, 'frames')]:
+        value = getattr(args, name)
+        if value:
+            device.config_set(key, key.parse_string(value))
 
-    for key, value in driver_options.items():
-        setattr(obj, key, value)
-
-    if args.time:
-        device.config_set(ConfigKey.LIMIT_MSEC, args.time)
-    if args.samples:
-        device.config_set(ConfigKey.LIMIT_SAMPLES, args.samples)
-    if args.frames:
-        device.config_set(ConfigKey.LIMIT_FRAMES, args.frames)
+    if args.config:
+        for pair in args.config.split(':'):
+            name, value = pair.split('=')
+            key = ConfigKey.get(name)
+            device.config_set(key, key.parse_string(value))
 
 if args.channels:
     enabled_channels = set(args.channels.split(','))
-    for channel in device.channels.values():
+    for channel in device.get_channels():
         channel.enabled = (channel.name in enabled_channels)
 
 if args.set:
     device.close()
     sys.exit(0)
 
-session = Session(context)
+session = context.create_session()
 
 if args.driver:
     session.add_device(device)
     session.start()
 
-output = Output(context.output_formats[args.output_format], device)
+output = context.output_formats[args.output_format].create_output(device)
 
 def datafeed_in(device, packet):
     text = output.receive(packet)
@@ -167,7 +163,7 @@ def datafeed_in(device, packet):
 session.add_callback(datafeed_in)
 
 if args.input_file:
-    input_file.load()
+    device.load()
     session.stop()
 else:
     if args.continuous:
