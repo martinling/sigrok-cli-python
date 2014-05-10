@@ -32,6 +32,7 @@ parser.add_argument('-d', '--driver', help="The driver to use")
 parser.add_argument('-c', '--config', help="Specify device configuration options")
 parser.add_argument('-i', '--input-file', help="Load input from file")
 parser.add_argument('-I', '--input-format', help="Input format")
+parser.add_argument('-o', '--output-file', help="Save output to file")
 parser.add_argument('-O', '--output-format', help="Output format", default="bits")
 parser.add_argument('-p', '--channels', help="Channels to use")
 parser.add_argument('-g', '--channel-group', help="Channel group to use")
@@ -155,10 +156,15 @@ if args.driver:
 
 output = context.output_formats[args.output_format].create_output(device)
 
+if args.output_file:
+    output_file = open(args.output_file, 'w')
+else:
+    output_file = sys.stdout
+
 def datafeed_in(device, packet):
     text = output.receive(packet)
     if text:
-        print text,
+        print >> output_file, text,
 
 session.add_datafeed_callback(datafeed_in)
 
