@@ -140,7 +140,7 @@ elif args.driver:
 
 if args.channels:
     enabled_channels = set(args.channels.split(','))
-    for channel in device.get_channels():
+    for channel in device.channels:
         channel.enabled = (channel.name in enabled_channels)
 
 if args.set:
