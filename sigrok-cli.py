@@ -87,20 +87,29 @@ if args.scan and not args.driver:
             print_device_info(device)
     sys.exit(0)
 
+session_input = False
+
 if args.input_file:
 
     if args.input_format:
         format = context.input_formats[args.input_format]
     else:
-        matched = False
-        for format in context.input_formats.values():
-            if format.format_match(args.input_file):
-                matched = True
-                break
-        if not matched:
-            raise Exception, "File not in any recognised input format."
+        try:
+            session = context.load_session(args.input_file)
+            session_input = True
+        except RuntimeError:
+            matched = False
+            for format in context.input_formats.values():
+                if format.format_match(args.input_file):
+                    matched = True
+                    break
+            if not matched:
+                raise Exception, "File not in any recognised input format."
 
-    device = format.open_file(args.input_file)
+    if session_input:
+        device = session.devices[0]
+    else:
+        device = format.open_file(args.input_file)
 
 elif args.driver:
 
@@ -148,10 +157,13 @@ if args.set:
     device.close()
     sys.exit(0)
 
-session = context.create_session()
+if not session_input:
+    session = context.create_session()
 
 if args.driver:
     session.add_device(device)
+
+if args.driver or session_input:
     session.start()
 
 output = context.output_formats[args.output_format].create_output(device)
@@ -168,7 +180,7 @@ def datafeed_in(device, packet):
 
 session.add_datafeed_callback(datafeed_in)
 
-if args.input_file:
+if args.input_file and not session_input:
     device.load()
     session.stop()
 else:
