@@ -160,7 +160,7 @@ def datafeed_in(device, packet):
     if text:
         print text,
 
-session.add_callback(datafeed_in)
+session.add_datafeed_callback(datafeed_in)
 
 if args.input_file:
     device.load()
