@@ -62,7 +62,7 @@ if args.version:
         context.package_version, context.lib_version)
     print "\nSupported hardware drivers:\n"
     for driver in context.drivers.values():
-        print "  %-20s %s" % (driver.name, driver.longname)
+        print "  %-20s %s" % (driver.name, driver.long_name)
     print "\nSupported input formats:\n"
     for input in context.input_formats.values():
         print "  %-20s %s" % (input.name, input.description)
@@ -73,7 +73,7 @@ if args.version:
     sys.exit(0)
 
 if args.loglevel:
-    context.loglevel = LogLevel.get(int(args.loglevel))
+    context.log_level = LogLevel.get(int(args.loglevel))
 
 def print_device_info(device):
     print "%s - %s with %d channels: %s" % (device.driver.name, str.join(' ',
