@@ -17,6 +17,7 @@
 ## along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ##
 
+from __future__ import print_function
 from sigrok.core.classes import *
 from signal import signal, SIGINT
 from fractions import Fraction
@@ -57,28 +58,29 @@ if not (args.version
 context = Context.create()
 
 if args.version:
-    print sys.argv[0], VERSION
-    print "\nUsing libsigrok %s (lib version %s)." % (
-        context.package_version, context.lib_version)
-    print "\nSupported hardware drivers:\n"
+    print(sys.argv[0], VERSION)
+    print("\nUsing libsigrok %s (lib version %s)." % (
+        context.package_version, context.lib_version))
+    print("\nSupported hardware drivers:\n")
     for driver in context.drivers.values():
-        print "  %-20s %s" % (driver.name, driver.long_name)
-    print "\nSupported input formats:\n"
+        print("  %-20s %s" % (driver.name, driver.long_name))
+    print("\nSupported input formats:\n")
     for input in context.input_formats.values():
-        print "  %-20s %s" % (input.name, input.description)
-    print "\nSupported output formats:\n"
+        print("  %-20s %s" % (input.name, input.description))
+    print("\nSupported output formats:\n")
     for output in context.output_formats.values():
-        print "  %-20s %s" % (output.name, output.description)
-    print
+        print("  %-20s %s" % (output.name, output.description))
+    print()
     sys.exit(0)
 
 if args.loglevel:
     context.log_level = LogLevel.get(int(args.loglevel))
 
 def print_device_info(device):
-    print "%s - %s with %d channels: %s" % (device.driver.name, str.join(' ',
+    channels = device.channels
+    print("%s - %s with %d channels: %s" % (device.driver.name, str.join(' ',
             [s for s in (device.vendor, device.model, device.version) if s]),
-        len(device.channels), str.join(' ', [c.name for c in device.get_channels()]))
+        len(channels), str.join(' ', [c.name for c in channels])))
 
 if args.scan and not args.driver:
     for driver in context.drivers.values():
@@ -104,7 +106,7 @@ if args.input_file:
                     matched = True
                     break
             if not matched:
-                raise Exception, "File not in any recognised input format."
+                raise Exception("File not in any recognised input format.")
 
     if session_input:
         device = session.devices[0]
@@ -150,7 +152,7 @@ elif args.driver:
 
 if args.channels:
     enabled_channels = set(args.channels.split(','))
-    for channel in device.channels:
+    for channel in device.get_channels():
         channel.enabled = (channel.name in enabled_channels)
 
 if args.set:
@@ -190,7 +192,7 @@ def datafeed_in(device, packet):
     else:
         text = output.receive(packet)
         if text:
-            print >> output_file, text,
+            print(text, file=output_file, end='')
 
 session.add_datafeed_callback(datafeed_in)
 
