@@ -77,10 +77,9 @@ if args.loglevel:
     context.log_level = LogLevel.get(int(args.loglevel))
 
 def print_device_info(device):
-    channels = device.channels
     print("%s - %s with %d channels: %s" % (device.driver.name, str.join(' ',
             [s for s in (device.vendor, device.model, device.version) if s]),
-        len(channels), str.join(' ', [c.name for c in channels])))
+        len(device.channels), str.join(' ', [c.name for c in device.channels])))
 
 if args.scan and not args.driver:
     for driver in context.drivers.values():
@@ -152,7 +151,7 @@ elif args.driver:
 
 if args.channels:
     enabled_channels = set(args.channels.split(','))
-    for channel in device.get_channels():
+    for channel in device.channels:
         channel.enabled = (channel.name in enabled_channels)
 
 if args.set:
