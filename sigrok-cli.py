@@ -121,7 +121,7 @@ elif args.driver:
     driver_options = {}
     for pair in driver_spec[1:]:
         name, value = pair.split('=')
-        key = ConfigKey.get(name)
+        key = ConfigKey.get_by_identifier(name)
         driver_options[name] = key.parse_string(value)
 
     devices = driver.scan(**driver_options)
@@ -146,7 +146,7 @@ elif args.driver:
     if args.config:
         for pair in args.config.split(':'):
             name, value = pair.split('=')
-            key = ConfigKey.get(name)
+            key = ConfigKey.get_by_identifier(name)
             device.config_set(key, key.parse_string(value))
 
 if args.channels:
